@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0,
+                 maximum-scale=1.0, user-scalable=no">
+  <title>표준지 지번 확인 관리</title>
+
+  <!-- =====================================================
+       Kakao Maps API
+       ※ 본인의 JavaScript 키로 변경
+       ===================================================== -->
+  <script
+    type="text/javascript"
+    src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f4f9103a2544f3ae3c961de63f4275ce&libraries=services">
+  </script>
+
+  <!-- =====================================================
+       SheetJS - 엑셀 파일 읽기
+       ===================================================== -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, "Noto Sans KR", sans-serif;
+    }
+
+    /* =====================================================
+       전체 화면
+       ===================================================== */
+    #app {
+      display: flex;
+      width: 100%;
+      height: 100vh;
+    }
+
+    /* =====================================================
+       왼쪽 패널
+       ===================================================== */
+    #sidebar {
+      width: 390px;
+      height: 100%;
+      background: #fff;
+      border-right: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+    }
+
+    /* =====================================================
+       제목
+       ===================================================== */
+    #title {
+      padding: 16px 18px 12px;
+      font-size: 21px;
+      font-weight: bold;
+      border-bottom: 1px solid #eee;
+    }
+
+    /* =====================================================
+       엑셀 영역
+       ===================================================== */
+    #excelArea {
+      padding: 12px 15px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #ddd;
+    }
+
+    #excelAreaTitle {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    #excelFile {
+      width: 100%;
+      font-size: 13px;
+    }
+
+    #excelButton {
+      width: 100%;
+      height: 42px;
+      margin-top: 8px;
+      border: none;
+      border-radius: 6px;
+      background: #198754;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #excelButton:hover {
+      background: #157347;
+    }
+
+    /* =====================================================
+       진행상황
+       ===================================================== */
+    #progressArea {
+      display: none;
+      margin-top: 10px;
+    }
+
+    #progressText {
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 5px;
+    }
+
+    #progressBarOuter {
+      width: 100%;
+      height: 10px;
+      background: #ddd;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    #progressBar {
+      width: 0%;
+      height: 100%;
+      background: #198754;
+      transition: width 0.2s;
+    }
+
+    /* =====================================================
+       주소 검색
+       ===================================================== */
+    #searchArea {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+    }
+
+    #addressInput {
+      width: 100%;
+      height: 42px;
+      padding: 0 11px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    #addressInput:focus {
+      border-color: #3388ff;
+    }
+
+    #searchButton {
+      width: 100%;
+      height: 42px;
+      margin-top: 7px;
+      border: none;
+      border-radius: 6px;
+      background: #3388ff;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #searchButton:hover {
+      background: #2277ee;
+    }
+
+    /* =====================================================
+       통계
+       ===================================================== */
+    #statistics {
+      padding: 9px 15px;
+      font-size: 12px;
+      line-height: 1.7;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+    }
+
+    #statistics strong {
+      color: #333;
+    }
+
+    /* =====================================================
+       상태 설명
+       ===================================================== */
+    #statusInfo {
+      display: flex;
+      gap: 5px;
+      padding: 8px 15px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .statusBox {
+      flex: 1;
+      padding: 5px 2px;
+      text-align: center;
+      border-radius: 5px;
+      color: white;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .statusUnknown {
+      background: #3388ff;
+    }
+
+    .statusDone {
+      background: #28a745;
+    }
+
+    .statusHold {
+      background: #dc3545;
+    }
+
+    /* =====================================================
+       목록
+       ===================================================== */
+    #list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .listItem {
+      display: flex;
+      align-items: center;
+      padding: 9px 7px;
+      margin-bottom: 5px;
+      border: 1px solid #ddd;
+      border-radius: 7px;
+      background: white;
+      cursor: pointer;
+    }
+
+    .listItem:hover {
+      background: #f5f5f5;
+    }
+
+    .listStatus {
+      width: 17px;
+      height: 17px;
+      min-width: 17px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .listAddress {
+      flex: 1;
+      min-width: 0;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .managementNo {
+      color: #777;
+      font-size: 11px;
+    }
+
+    .statusText {
+      color: #777;
+      font-size: 11px;
+    }
+
+    .deleteButton {
+      width: 29px;
+      height: 29px;
+      border: none;
+      border-radius: 5px;
+      background: #eee;
+      color: #555;
+      cursor: pointer;
+    }
+
+    .deleteButton:hover {
+      background: #dc3545;
+      color: white;
+    }
+
+    /* =====================================================
+       지도 및 커스텀 컨트롤 버튼 스타일
+       ===================================================== */
+    #map {
+      flex: 1;
+      height: 100%;
+      position: relative;
+    }
+
+    .mapControlPanel {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      z-index: 5;
+      background: white;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      display: flex;
+      overflow: hidden;
+      border: 1px solid #ccc;
+    }
+
+    .mapBtn {
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: bold;
+      background: white;
+      border: none;
+      cursor: pointer;
+      outline: none;
+      color: #333;
+      border-right: 1px solid #ddd;
+    }
+
+    .mapBtn:last-child {
+      border-right: none;
+    }
+
+    .mapBtn:hover {
+      background: #f1f1f1;
+    }
+
+    .mapBtn.active {
+      background: #3388ff;
+      color: white;
+    }
+
+    /* =====================================================
+       ★ 관리번호가 표시되는 마커
+       ===================================================== */
+    .customMarker {
+      min-width: 34px;
+      height: 34px;
+      padding: 0 7px;
+      border-radius: 50%;
+      border: 3px solid white;
+      box-shadow: 0 2px 7px rgba(0,0,0,0.45);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 11px;
+      font-weight: bold;
+      white-space: nowrap;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+      user-select: none;
+    }
+
+    .markerUnknown {
+      background: #3388ff;
+    }
+
+    .markerDone {
+      background: #28a745;
+    }
+
+    .markerHold {
+      background: #dc3545;
+    }
+
+    /* =====================================================
+       내 위치 표시 마커
+       ===================================================== */
+    .currentLocMarker {
+      width: 16px;
+      height: 16px;
+      background-color: #007bff;
+      border: 3px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 0 5px rgba(0,0,0,0.5);
+      position: relative;
+      z-index: 20;
+    }
+
+    /* =====================================================
+       모바일
+       ===================================================== */
+    @media (max-width: 700px) {
+      #sidebar {
+        width: 310px;
+      }
+      #title {
+        font-size: 18px;
+      }
+      .listAddress {
+        font-size: 12px;
+      }
+      .customMarker {
+        min-width: 30px;
+        height: 30px;
+        font-size: 9px;
+        padding: 0 5px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="app">
+
+  <!-- =====================================================
+       왼쪽 패널
+       ===================================================== -->
+  <div id="sidebar">
+
+    <div id="title">
+      표준지 지번 확인 관리
+    </div>
+
+    <!-- ===================================================
+         엑셀
+         =================================================== -->
+    <div id="excelArea">
+      <div id="excelAreaTitle">
+        📂 표준지 엑셀 일괄등록
+      </div>
+      <input type="file" id="excelFile" accept=".xlsx,.xls">
+      <button id="excelButton">
+        엑셀 주소 불러오기
+      </button>
+
+      <div id="progressArea">
+        <div id="progressText">
+          준비 중...
+        </div>
+        <div id="progressBarOuter">
+          <div id="progressBar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================
+         직접 검색
+         =================================================== -->
+    <div id="searchArea">
+      <input type="text" id="addressInput" placeholder="예: 청도군 이서면 고철리 6">
+      <button id="searchButton">
+        주소 검색
+      </button>
+    </div>
+
+    <!-- ===================================================
+         통계
+         =================================================== -->
+    <div id="statistics">
+      <div>전체: <strong id="totalCount">0</strong>건</div>
+      <div>표시: <strong id="successCount">0</strong>건</div>
+      <div>검색실패: <strong id="failCount">0</strong>건</div>
+      <div>확인완료: <strong id="doneCount">0</strong>건</div>
+    </div>
+
+    <!-- ===================================================
+         상태
+         =================================================== -->
+    <div id="statusInfo">
+      <div class="statusBox statusUnknown">미확인</div>
+      <div class="statusBox statusDone">확인완료</div>
+      <div class="statusBox statusHold">보류</div>
+    </div>
+
+    <!-- 목록 -->
+    <div id="list"></div>
+  </div>
+
+  <!-- =====================================================
+       지도 영역
+       ===================================================== -->
+  <div id="map">
+    <!-- 지도 상단 우측에 배치할 커스텀 컨트롤 패널 -->
+    <div class="mapControlPanel">
+      <button type="button" id="btnCurrentLoc" class="mapBtn" onclick="moveToCurrentLocation()">내 위치</button>
+      <button type="button" id="btnRoadmap" class="mapBtn" onclick="setMapType('roadmap')">일반지도</button>
+      <button type="button" id="btnSkyview" class="mapBtn active" onclick="setMapType('skyview')">위성지도</button>
+      <button type="button" id="btnDistrict" class="mapBtn active" onclick="toggleDistrict()">지적편집도(ON)</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================
+   지도 초기화
+   ========================================================= */
+const mapContainer = document.getElementById('map');
+const mapOption = {
+  center: new kakao.maps.LatLng(35.6628, 128.6694),
+  level: 3
+};
+const map = new kakao.maps.Map(mapContainer, mapOption);
+
+/* =========================================================
+   초기 지도 모드 설정 (위성지도 + 지적편집도 켜짐)
+   ========================================================= */
+map.setMapTypeId(kakao.maps.MapTypeId.SKYVIEW);
+map.addOverlayMapTypeId(kakao.maps.MapTypeId.USE_DISTRICT);
+let isDistrictOn = true;
+
+/* =========================================================
+   지도 타입 변경 함수 (일반지도 / 위성지도)
+   ========================================================= */
+function setMapType(type) {
+  const btnRoadmap = document.getElementById('btnRoadmap');
+  const btnSkyview = document.getElementById('btnSkyview');
+  if (type === 'roadmap') {
+    map.setMapTypeId(kakao.maps.MapTypeId.ROADMAP);
+    btnRoadmap.classList.add('active');
+    btnSkyview.classList.remove('active');
+  } else {
+    map.setMapTypeId(kakao.maps.MapTypeId.SKYVIEW);
+    btnSkyview.classList.add('active');
+    btnRoadmap.classList.remove('active');
+  }
+}
+
+/* =========================================================
+   지적편집도 토글 함수 (켜기 / 끄기)
+   ========================================================= */
+function toggleDistrict() {
+  const btnDistrict = document.getElementById('btnDistrict');
+  if (isDistrictOn) {
+    map.removeOverlayMapTypeId(kakao.maps.MapTypeId.USE_DISTRICT);
+    isDistrictOn = false;
+    btnDistrict.textContent = '지적편집도(OFF)';
+    btnDistrict.classList.remove('active');
+  } else {
+    map.addOverlayMapTypeId(kakao.maps.MapTypeId.USE_DISTRICT);
+    isDistrictOn = true;
+    btnDistrict.textContent = '지적편집도(ON)';
+    btnDistrict.classList.add('active');
+  }
+}
+
+/* =========================================================
+   확대 / 축소 컨트롤
+   ========================================================= */
+const zoomControl = new kakao.maps.ZoomControl();
+map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+
+/* =========================================================
+   주소 검색
+   ========================================================= */
+const geocoder = new kakao.maps.services.Geocoder();
+
+/* =========================================================
+   데이터 및 검색 실패 배열
+   ========================================================= */
+let locations = [];
+let failedAddresses = [];
+let excelTotalCount = 0;
+
+/* =========================================================
+   버튼 이벤트
+   ========================================================= */
+document.getElementById('searchButton').addEventListener('click', searchManualAddress);
+document.getElementById('addressInput').addEventListener('keydown', function(event) {
+  if (event.key === 'Enter') {
+    searchManualAddress();
+  }
+});
+document.getElementById('excelButton').addEventListener('click', loadExcel);
+
+/* =========================================================
+   내 위치 표시 (Geolocation)
+   ========================================================= */
+let currentLocationOverlay = null;
+
+function moveToCurrentLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      function(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        const locPosition = new kakao.maps.LatLng(lat, lon);
+
+        map.setCenter(locPosition);
+        map.setLevel(3);
+
+        if (currentLocationOverlay) {
+          currentLocationOverlay.setMap(null);
+        }
+
+        const content = document.createElement('div');
+        content.className = 'currentLocMarker';
+        content.title = '내 위치';
+
+        currentLocationOverlay = new kakao.maps.CustomOverlay({
+          map: map,
+          position: locPosition,
+          content: content,
+          xAnchor: 0.5,
+          yAnchor: 0.5,
+          zIndex: 20
+        });
+      },
+      function(error) {
+        console.error(error);
+        alert('위치 정보를 가져올 수 없습니다. 브라우저의 위치 권한이 허용되어 있는지 확인해 주세요.');
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 10000
+      }
+    );
+  } else {
+    alert('이 브라우저에서는 위치 정보(Geolocation)가 지원되지 않습니다.');
+  }
+}
+
+/* =========================================================
+   직접 주소검색
+   ========================================================= */
+function searchManualAddress() {
+  const address = document.getElementById('addressInput').value.trim();
+  if (!address) {
+    alert('주소를 입력해주세요.');
+    return;
+  }
+  searchOneAddress(address, '', '');
+}
+
+/* =========================================================
+   엑셀 불러오기
+   ========================================================= */
+function loadExcel() {
+  const fileInput = document.getElementById('excelFile');
+  if (!fileInput.files || fileInput.files.length === 0) {
+    alert('먼저 엑셀 파일을 선택해주세요.');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+
+  reader.onload = async function(event) {
+    try {
+      const data = new Uint8Array(event.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+      if (!rows || rows.length === 0) {
+        alert('엑셀 파일에 데이터가 없습니다.');
+        return;
+      }
+
+      let startIndex = 0;
+      const firstValue = String(rows[0][0] || '').trim();
+      if (isNaN(Number(firstValue))) {
+        startIndex = 1;
+      }
+
+      const excelRows = [];
+      for (let i = startIndex; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length < 3) continue;
+
+        const managementNo = String(row[0] || '').trim();
+        const village = String(row[1] || '').trim();
+        const lotNumber = String(row[2] || '').trim();
+
+        if (village === '' && lotNumber === '') continue;
+
+        const fullAddress = makeFullAddress(village, lotNumber);
+        excelRows.push({
+          managementNo: managementNo,
+          village: village,
+          lotNumber: lotNumber,
+          address: fullAddress
+        });
+      }
+
+      excelTotalCount = excelRows.length;
+      if (excelRows.length === 0) {
+        alert('주소 데이터를 찾지 못했습니다.');
+        return;
+      }
+
+      if (locations.length > 0) {
+        const answer = confirm(
+          '현재 지도에 ' + locations.length + '개의 지번이 있습니다.\n\n' +
+          '기존 데이터를 지우고\n새 엑셀 파일을 불러오시겠습니까?'
+        );
+        if (!answer) return;
+        clearAllLocations();
+      }
+
+      failedAddresses = [];
+      showProgress();
+
+      for (let i = 0; i < excelRows.length; i++) {
+        const row = excelRows[i];
+        updateProgress(i, excelRows.length, row.address);
+        await searchOneAddressAsync(row.address, row.managementNo, row.lotNumber);
+        await sleep(250);
+      }
+
+      updateProgress(excelRows.length, excelRows.length, '완료');
+      fitAllMarkers();
+      updateStatistics();
+
+      setTimeout(function() {
+        hideProgress();
+      }, 1500);
+
+      if (failedAddresses.length > 0) {
+        alert('엑셀 처리가 완료되었습니다.\n\n전체: ' + excelRows.length + '건\n검색 성공: ' + locations.length + '건\n검색 실패: ' + failedAddresses.length + '건');
+      } else {
+        alert('엑셀 처리가 완료되었습니다.\n\n총 ' + excelRows.length + '건이 모두 지도에 표시되었습니다.');
+      }
+    } catch (error) {
+      console.error(error);
+      hideProgress();
+      alert('엑셀 파일을 읽는 중 오류가 발생했습니다.\n\n' + error.message);
+    }
+  };
+
+  reader.onerror = function() {
+    alert('엑셀 파일을 읽을 수 없습니다.');
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* =========================================================
+   주소 만들기
+   ========================================================= */
+function makeFullAddress(village, lotNumber) {
+  let address = '경상북도 청도군 ';
+  if (village) address += village + ' ';
+  if (lotNumber) address += lotNumber;
+  return address.trim();
+}
+
+/* =========================================================
+   주소 하나 검색 (비동기)
+   ========================================================= */
+function searchOneAddressAsync(address, managementNo, lotNumber) {
+  return new Promise(function(resolve) {
+    geocoder.addressSearch(address, function(result, status) {
+      if (status === kakao.maps.services.Status.OK) {
+        const lat = parseFloat(result[0].y);
+        const lng = parseFloat(result[0].x);
+
+        const exists = locations.some(function(item) {
+          return (Math.abs(item.lat - lat) < 0.000001 && Math.abs(item.lng - lng) < 0.000001);
+        });
+
+        if (!exists) {
+          addLocation(address, lat, lng, managementNo, lotNumber);
+        }
+      } else {
+        failedAddresses.push({
+          managementNo: managementNo,
+          address: address,
+          lotNumber: lotNumber
+        });
+      }
+      updateStatistics();
+      resolve();
+    });
+  });
+}
+
+/* =========================================================
+   수동 검색
+   ========================================================= */
+function searchOneAddress(address, managementNo, lotNumber) {
+  geocoder.addressSearch(address, function(result, status) {
+    if (status === kakao.maps.services.Status.OK) {
+      const lat = parseFloat(result[0].y);
+      const lng = parseFloat(result[0].x);
+
+      addLocation(address, lat, lng, managementNo, lotNumber);
+      map.setCenter(new kakao.maps.LatLng(lat, lng));
+      map.setLevel(3);
+    } else {
+      alert('주소를 찾을 수 없습니다.\n\n' + address);
+    }
+  });
+}
+
+/* =========================================================
+   지번 추가
+   ========================================================= */
+function addLocation(address, lat, lng, managementNo, lotNumber) {
+  const location = {
+    id: Date.now() + Math.random(),
+    address: address,
+    lat: lat,
+    lng: lng,
+    managementNo: managementNo || '',
+    lotNumber: lotNumber || '',
+    status: 0,
+    marker: null
+  };
+  locations.push(location);
+  createMarker(location);
+  renderList();
+  updateStatistics();
+}
+
+/* =========================================================
+   ★ 관리번호 표시 마커 생성
+   ========================================================= */
+function createMarker(location) {
+  const element = document.createElement('div');
+  element.className = 'customMarker markerUnknown';
+  element.textContent = location.managementNo || '';
+
+  element.addEventListener('click', function() {
+    changeStatus(location);
+  });
+
+  element.title = (location.managementNo ? '관리번호: ' + location.managementNo + '\n' : '') + location.address;
+
+  const overlay = new kakao.maps.CustomOverlay({
+    position: new kakao.maps.LatLng(location.lat, location.lng),
+    content: element,
+    xAnchor: 0.5,
+    yAnchor: 0.5,
+    zIndex: 10
+  });
+
+  overlay.setMap(map);
+  location.marker = overlay;
+}
+
+/* =========================================================
+   상태 변경
+   ========================================================= */
+function changeStatus(location) {
+  location.status++;
+  if (location.status > 2) {
+    location.status = 0;
+  }
+  updateMarker(location);
+  renderList();
+  updateStatistics();
+}
+
+/* =========================================================
+   마커 상태 변경
+   ========================================================= */
+function updateMarker(location) {
+  if (!location.marker) return;
+  const element = location.marker.getContent();
+  element.classList.remove('markerUnknown', 'markerDone', 'markerHold');
+  
+  if (location.status === 0) {
+    element.classList.add('markerUnknown');
+  } else if (location.status === 1) {
+    element.classList.add('markerDone');
+  } else {
+    element.classList.add('markerHold');
+  }
+}
+
+/* =========================================================
+   상태 색상 & 이름
+   ========================================================= */
+function getStatusColor(status) {
+  if (status === 0) return '#3388ff';
+  if (status === 1) return '#28a745';
+  return '#dc3545';
+}
+
+function getStatusName(status) {
+  if (status === 0) return '미확인';
+  if (status === 1) return '확인완료';
+  return '보류';
+}
+
+/* =========================================================
+   목록 렌더링
+   ========================================================= */
+function renderList() {
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+  const reversed = [...locations].reverse();
+
+  reversed.forEach(function(location) {
+    const item = document.createElement('div');
+    item.className = 'listItem';
+
+    const statusCircle = document.createElement('div');
+    statusCircle.className = 'listStatus';
+    statusCircle.style.background = getStatusColor(location.status);
+
+    const address = document.createElement('div');
+    address.className = 'listAddress';
+    address.innerHTML = 
+      '<span class="managementNo">관리번호 ' + (location.managementNo || '-') + '</span><br>' +
+      '<strong>' + location.address + '</strong><br>' +
+      '<span class="statusText">' + getStatusName(location.status) + '</span>';
+
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'deleteButton';
+    deleteButton.textContent = '✕';
+    deleteButton.title = '삭제';
+    deleteButton.addEventListener('click', function(event) {
+      event.stopPropagation();
+      deleteLocation(location);
+    });
+
+    item.addEventListener('click', function() {
+      map.setCenter(new kakao.maps.LatLng(location.lat, location.lng));
+      map.setLevel(3);
+    });
+
+    item.addEventListener('dblclick', function(event) {
+      event.stopPropagation();
+      changeStatus(location);
+    });
+
+    item.appendChild(statusCircle);
+    item.appendChild(address);
+    item.appendChild(deleteButton);
+    list.appendChild(item);
+  });
+
+  if (failedAddresses.length > 0) {
+    const failTitle = document.createElement('div');
+    failTitle.style.padding = '12px 7px 5px';
+    failTitle.style.color = '#dc3545';
+    failTitle.style.fontWeight = 'bold';
+    failTitle.style.fontSize = '13px';
+    failTitle.textContent = '⚠ 검색 실패 ' + failedAddresses.length + '건';
+    list.appendChild(failTitle);
+
+    failedAddresses.forEach(function(item) {
+      const fail = document.createElement('div');
+      fail.style.padding = '7px';
+      fail.style.marginBottom = '4px';
+      fail.style.border = '1px solid #f0c0c0';
+      fail.style.borderRadius = '5px';
+      fail.style.background = '#fff7f7';
+      fail.style.fontSize = '11px';
+      fail.innerHTML = '<b>' + (item.managementNo || '-') + '</b><br>' + item.address;
+      list.appendChild(fail);
+    });
+  }
+}
+
+/* =========================================================
+   삭제
+   ========================================================= */
+function deleteLocation(location) {
+  if (location.marker) {
+    location.marker.setMap(null);
+  }
+  locations = locations.filter(function(item) {
+    return item.id !== location.id;
+  });
+  renderList();
+  updateStatistics();
+}
+
+function clearAllLocations() {
+  locations.forEach(function(location) {
+    if (location.marker) location.marker.setMap(null);
+  });
+  locations = [];
+  renderList();
+  updateStatistics();
+}
+
+/* =========================================================
+   통계
+   ========================================================= */
+function updateStatistics() {
+  document.getElementById('totalCount').textContent = excelTotalCount || locations.length;
+  document.getElementById('successCount').textContent = locations.length;
+  document.getElementById('failCount').textContent = failedAddresses.length;
+  const doneCount = locations.filter(function(item) {
+    return item.status === 1;
+  }).length;
+  document.getElementById('doneCount').textContent = doneCount;
+}
+
+/* =========================================================
+   진행상황
+   ========================================================= */
+function showProgress() {
+  document.getElementById('progressArea').style.display = 'block';
+  document.getElementById('progressBar').style.width = '0%';
+}
+
+function updateProgress(current, total, address) {
+  const percent = total > 0 ? Math.round(current / total * 100) : 0;
+  document.getElementById('progressBar').style.width = percent + '%';
+  document.getElementById('progressText').textContent = current + ' / ' + total + '건 처리 중... ' + percent + '%';
+  document.getElementById('progressText').title = address;
+}
+
+function hideProgress() {
+  document.getElementById('progressArea').style.display = 'none';
+}
+
+function sleep(milliseconds) {
+  return new Promise(function(resolve) {
+    setTimeout(resolve, milliseconds);
+  });
+}
+
+/* =========================================================
+   모든 마커가 보이도록 조정
+   ========================================================= */
+function fitAllMarkers() {
+  if (locations.length === 0) return;
+  const bounds = new kakao.maps.LatLngBounds();
+  locations.forEach(function(location) {
+    bounds.extend(new kakao.maps.LatLng(location.lat, location.lng));
+  });
+  map.setBounds(bounds);
+  if (locations.length === 1) map.setLevel(4);
+}
+
+/* =========================================================
+   화면 크기 변경
+   ========================================================= */
+window.addEventListener('resize', function() {
+  map.relayout();
+});
+
+/* =========================================================
+   초기 실행
+   ========================================================= */
+renderList();
+updateStatistics();
+
+</script>
+
+</body>
+</html>
