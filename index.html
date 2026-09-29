@@ -82,12 +82,25 @@
     .customMarker { min-width: 34px; height: 34px; padding: 0 7px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 7px rgba(0,0,0,0.45); cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: bold; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
     .markerUnknown { background: #3388ff; } .markerDone { background: #28a745; } .markerHold { background: #dc3545; }
 
-    @keyframes pulse-ring {
-      0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7); }
-      70% { box-shadow: 0 0 0 15px rgba(0, 123, 255, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+    /* =====================================================
+       내 위치 표시 마커 (빨간색 및 펄스 효과로 변경)
+       ===================================================== */
+    @keyframes pulse-ring-red {
+      0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+      70% { box-shadow: 0 0 0 15px rgba(220, 53, 69, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
     }
-    .currentLocMarker { width: 18px; height: 18px; background-color: #007bff; border: 3px solid #ffffff; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.5); position: relative; z-index: 20; animation: pulse-ring 2s infinite; }
+    .currentLocMarker { 
+      width: 18px; 
+      height: 18px; 
+      background-color: #dc3545; /* 빨간색 */
+      border: 3px solid #ffffff; 
+      border-radius: 50%; 
+      box-shadow: 0 0 5px rgba(0,0,0,0.5); 
+      position: relative; 
+      z-index: 20; 
+      animation: pulse-ring-red 2s infinite; 
+    }
 
     /* 모바일 화면 */
     @media (max-width: 700px) {
@@ -125,7 +138,6 @@
 
     <div id="excelArea">
       <div id="excelAreaTitle">📂 표준지 엑셀 일괄등록</div>
-      <!-- 모바일 호환성을 위해 accept 속성을 넓게 수정 -->
       <input type="file" id="excelFile">
       <button id="excelButton">엑셀 주소 불러오기</button>
       <div id="progressArea">
@@ -288,8 +300,6 @@ function loadExcel() {
   if (!fileInput.files || fileInput.files.length === 0) { alert('먼저 엑셀 파일을 선택해주세요.'); return; }
   
   const file = fileInput.files[0];
-  
-  // 파일 확장자 검증 (모바일에서 파일 선택 후 안전하게 체크)
   const fileName = file.name.toLowerCase();
   if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
     alert('엑셀 파일(.xlsx, .xls)만 업로드할 수 있습니다.');
