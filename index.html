@@ -82,24 +82,16 @@
     .customMarker { min-width: 34px; height: 34px; padding: 0 7px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 7px rgba(0,0,0,0.45); cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: bold; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
     .markerUnknown { background: #3388ff; } .markerDone { background: #28a745; } .markerHold { background: #dc3545; }
 
-    /* =====================================================
-       내 위치 표시 마커 (빨간색 및 펄스 효과로 변경)
-       ===================================================== */
+    /* 내 위치 표시 마커 (빨간색) */
     @keyframes pulse-ring-red {
       0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
       70% { box-shadow: 0 0 0 15px rgba(220, 53, 69, 0); }
       100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
     }
     .currentLocMarker { 
-      width: 18px; 
-      height: 18px; 
-      background-color: #dc3545; /* 빨간색 */
-      border: 3px solid #ffffff; 
-      border-radius: 50%; 
-      box-shadow: 0 0 5px rgba(0,0,0,0.5); 
-      position: relative; 
-      z-index: 20; 
-      animation: pulse-ring-red 2s infinite; 
+      width: 18px; height: 18px; background-color: #dc3545; 
+      border: 3px solid #ffffff; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.5); 
+      position: relative; z-index: 20; animation: pulse-ring-red 2s infinite; 
     }
 
     /* 모바일 화면 */
@@ -226,7 +218,10 @@ function toggleDistrict() {
 const zoomControl = new kakao.maps.ZoomControl();
 map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
 const geocoder = new kakao.maps.services.Geocoder();
-let locations = []; let failedAddresses = []; let excelTotalCount = 0;
+
+let locations = []; 
+let failedAddresses = []; 
+let excelTotalCount = 0;
 
 document.getElementById('searchButton').addEventListener('click', searchManualAddress);
 document.getElementById('addressInput').addEventListener('keydown', function(event) {
@@ -295,6 +290,58 @@ function searchManualAddress() {
   searchOneAddress(address, '', '');
 }
 
+/* =========================================================
+   데이터 저장 및 불러오기 (LocalStorage 연동)
+   ========================================================= */
+function saveToLocalStorage() {
+  const dataToSave = locations.map(l => ({
+    id: l.id,
+    address: l.address,
+    lat: l.lat,
+    lng: l.lng,
+    managementNo: l.managementNo,
+    lotNumber: l.lotNumber,
+    status: l.status
+  }));
+  localStorage.setItem('standard_locations', JSON.stringify(dataToSave));
+  localStorage.setItem('standard_totalCount', excelTotalCount);
+}
+
+function loadFromLocalStorage() {
+  const savedData = localStorage.getItem('standard_locations');
+  const savedTotal = localStorage.getItem('standard_totalCount');
+  
+  if (savedData) {
+    try {
+      const parsed = JSON.parse(savedData);
+      excelTotalCount = savedTotal ? Number(savedTotal) : parsed.length;
+      
+      parsed.forEach(item => {
+        const location = {
+          id: item.id,
+          address: item.address,
+          lat: item.lat,
+          lng: item.lng,
+          managementNo: item.managementNo || '',
+          lotNumber: item.lotNumber || '',
+          status: item.status || 0,
+          marker: null
+        };
+        locations.push(location);
+        createMarker(location);
+      });
+      
+      renderList();
+      updateStatistics();
+      if (locations.length > 0) {
+        fitAllMarkers();
+      }
+    } catch(e) {
+      console.error('저장된 데이터 로딩 실패', e);
+    }
+  }
+}
+
 function loadExcel() {
   const fileInput = document.getElementById('excelFile');
   if (!fileInput.files || fileInput.files.length === 0) { alert('먼저 엑셀 파일을 선택해주세요.'); return; }
@@ -330,7 +377,7 @@ function loadExcel() {
 
       excelTotalCount = excelRows.length;
       if (locations.length > 0) {
-        if (!confirm('기존 데이터를 지우고 새로 불러오시겠습니까?')) return;
+        if (!confirm('현재 지도에 ' + locations.length + '개의 지번이 있습니다.\n\n기존 데이터를 지우고 새 엑셀 파일을 불러오시겠습니까?')) return;
         clearAllLocations();
       }
 
@@ -341,7 +388,11 @@ function loadExcel() {
         await sleep(250);
       }
       updateProgress(excelRows.length, excelRows.length, '완료');
-      fitAllMarkers(); updateStatistics(); setTimeout(hideProgress, 1500);
+      
+      saveToLocalStorage(); // 엑셀 로딩 완료 후 저장
+      fitAllMarkers(); 
+      updateStatistics(); 
+      setTimeout(hideProgress, 1500);
 
       if (window.innerWidth <= 700) { toggleMenu(); }
 
@@ -364,7 +415,7 @@ function searchOneAddressAsync(address, managementNo, lotNumber) {
       if (status === kakao.maps.services.Status.OK) {
         const lat = parseFloat(result[0].y), lng = parseFloat(result[0].x);
         if (!locations.some(item => Math.abs(item.lat - lat) < 0.000001 && Math.abs(item.lng - lng) < 0.000001)) {
-          addLocation(address, lat, lng, managementNo, lotNumber);
+          addLocation(address, lat, lng, managementNo, lotNumber, false);
         }
       } else failedAddresses.push({ managementNo, address, lotNumber });
       updateStatistics(); resolve();
@@ -376,21 +427,30 @@ function searchOneAddress(address, managementNo, lotNumber) {
   geocoder.addressSearch(address, (result, status) => {
     if (status === kakao.maps.services.Status.OK) {
       const lat = parseFloat(result[0].y), lng = parseFloat(result[0].x);
-      addLocation(address, lat, lng, managementNo, lotNumber);
+      addLocation(address, lat, lng, managementNo, lotNumber, true);
       map.setCenter(new kakao.maps.LatLng(lat, lng)); map.setLevel(3);
       if (window.innerWidth <= 700) toggleMenu();
     } else alert('주소를 찾을 수 없습니다.');
   });
 }
 
-function addLocation(address, lat, lng, managementNo, lotNumber) {
+function addLocation(address, lat, lng, managementNo, lotNumber, save = true) {
   const location = { id: Date.now() + Math.random(), address, lat, lng, managementNo: managementNo || '', lotNumber: lotNumber || '', status: 0, marker: null };
-  locations.push(location); createMarker(location); renderList(); updateStatistics();
+  locations.push(location); 
+  createMarker(location); 
+  renderList(); 
+  updateStatistics();
+  if (save) {
+    saveToLocalStorage();
+  }
 }
 
 function createMarker(location) {
   const element = document.createElement('div');
   element.className = 'customMarker markerUnknown';
+  if (location.status === 1) element.className = 'customMarker markerDone';
+  if (location.status === 2) element.className = 'customMarker markerHold';
+
   element.textContent = location.managementNo || '';
   element.addEventListener('click', () => changeStatus(location));
   element.title = (location.managementNo ? '관리번호: ' + location.managementNo + '\n' : '') + location.address;
@@ -400,7 +460,10 @@ function createMarker(location) {
 
 function changeStatus(location) {
   location.status = location.status > 1 ? 0 : location.status + 1;
-  updateMarker(location); renderList(); updateStatistics();
+  updateMarker(location); 
+  renderList(); 
+  updateStatistics();
+  saveToLocalStorage(); // 상태 변경될 때도 자동 저장
 }
 
 function updateMarker(location) {
@@ -446,8 +509,24 @@ function renderList() {
   }
 }
 
-function deleteLocation(location) { if (location.marker) location.marker.setMap(null); locations = locations.filter(i => i.id !== location.id); renderList(); updateStatistics(); }
-function clearAllLocations() { locations.forEach(l => { if (l.marker) l.marker.setMap(null); }); locations = []; renderList(); updateStatistics(); }
+function deleteLocation(location) { 
+  if (location.marker) location.marker.setMap(null); 
+  locations = locations.filter(i => i.id !== location.id); 
+  renderList(); 
+  updateStatistics();
+  saveToLocalStorage(); // 개별 삭제 시 저장
+}
+
+function clearAllLocations() { 
+  locations.forEach(l => { if (l.marker) l.marker.setMap(null); }); 
+  locations = []; 
+  excelTotalCount = 0;
+  localStorage.removeItem('standard_locations'); // 저장소 비우기
+  localStorage.removeItem('standard_totalCount');
+  renderList(); 
+  updateStatistics(); 
+}
+
 function updateStatistics() {
   document.getElementById('totalCount').textContent = excelTotalCount || locations.length;
   document.getElementById('successCount').textContent = locations.length;
@@ -463,14 +542,21 @@ function updateProgress(curr, tot, addr) {
 }
 function hideProgress() { document.getElementById('progressArea').style.display = 'none'; }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 function fitAllMarkers() {
   if (!locations.length) return;
   const bounds = new kakao.maps.LatLngBounds();
-  locations.length && locations.forEach(l => bounds.extend(new kakao.maps.LatLng(l.lat, l.lng)));
+  locations.forEach(l => bounds.extend(new kakao.maps.LatLng(l.lat, l.lng)));
   map.setBounds(bounds); if (locations.length === 1) map.setLevel(4);
 }
+
 window.addEventListener('resize', () => map.relayout());
-renderList(); updateStatistics();
+
+/* =========================================================
+   초기 실행 시 저장된 데이터 불러오기
+   ========================================================= */
+loadFromLocalStorage();
+updateStatistics();
 </script>
 </body>
 </html>
