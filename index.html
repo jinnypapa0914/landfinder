@@ -79,8 +79,34 @@
     .mapBtn.active { background: #3388ff; color: white; }
     .mapBtn.tracking-active { background: #dc3545; color: white; }
 
-    .customMarker { min-width: 34px; height: 34px; padding: 0 7px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 7px rgba(0,0,0,0.45); cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: bold; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-    .markerUnknown { background: #3388ff; } .markerDone { background: #28a745; } .markerHold { background: #dc3545; }
+    /* =====================================================
+       ★ 관리번호 마커 (배경 투명 처리 및 가독성 강화)
+       ===================================================== */
+    .customMarker {
+      min-width: 32px;
+      height: 32px;
+      padding: 0 6px;
+      border-radius: 50%;
+      background: transparent !important; /* 배경 투명 */
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      white-space: nowrap;
+      user-select: none;
+      /* 배경이 투명할 때 지도 위에서 글자가 잘 보이도록 진한 외곽선(그림자) 효과 적용 */
+      text-shadow: 
+        -2px -2px 0 #fff,  2px -2px 0 #fff, 
+        -2px  2px 0 #fff,  2px  2px 0 #fff,
+         0px  1px 3px rgba(0,0,0,0.9);
+    }
+
+    /* 상태별 글자 색상 지정 */
+    .markerUnknown { color: #0056b3; border: 2px solid #0056b3; } /* 미확인: 진한 파란색 */
+    .markerDone    { color: #1e7e34; border: 2px solid #1e7e34; } /* 확인완료: 진한 초록색 */
+    .markerHold    { color: #bd2130; border: 2px solid #bd2130; } /* 보류: 진한 빨간색 */
 
     /* 내 위치 표시 마커 (빨간색) */
     @keyframes pulse-ring-red {
@@ -290,18 +316,11 @@ function searchManualAddress() {
   searchOneAddress(address, '', '');
 }
 
-/* =========================================================
-   데이터 저장 및 불러오기 (LocalStorage 연동)
-   ========================================================= */
+/* LocalStorage 연동 */
 function saveToLocalStorage() {
   const dataToSave = locations.map(l => ({
-    id: l.id,
-    address: l.address,
-    lat: l.lat,
-    lng: l.lng,
-    managementNo: l.managementNo,
-    lotNumber: l.lotNumber,
-    status: l.status
+    id: l.id, address: l.address, lat: l.lat, lng: l.lng,
+    managementNo: l.managementNo, lotNumber: l.lotNumber, status: l.status
   }));
   localStorage.setItem('standard_locations', JSON.stringify(dataToSave));
   localStorage.setItem('standard_totalCount', excelTotalCount);
@@ -318,14 +337,9 @@ function loadFromLocalStorage() {
       
       parsed.forEach(item => {
         const location = {
-          id: item.id,
-          address: item.address,
-          lat: item.lat,
-          lng: item.lng,
-          managementNo: item.managementNo || '',
-          lotNumber: item.lotNumber || '',
-          status: item.status || 0,
-          marker: null
+          id: item.id, address: item.address, lat: item.lat, lng: item.lng,
+          managementNo: item.managementNo || '', lotNumber: item.lotNumber || '',
+          status: item.status || 0, marker: null
         };
         locations.push(location);
         createMarker(location);
@@ -333,12 +347,8 @@ function loadFromLocalStorage() {
       
       renderList();
       updateStatistics();
-      if (locations.length > 0) {
-        fitAllMarkers();
-      }
-    } catch(e) {
-      console.error('저장된 데이터 로딩 실패', e);
-    }
+      if (locations.length > 0) fitAllMarkers();
+    } catch(e) { console.error(e); }
   }
 }
 
@@ -389,7 +399,7 @@ function loadExcel() {
       }
       updateProgress(excelRows.length, excelRows.length, '완료');
       
-      saveToLocalStorage(); // 엑셀 로딩 완료 후 저장
+      saveToLocalStorage(); 
       fitAllMarkers(); 
       updateStatistics(); 
       setTimeout(hideProgress, 1500);
@@ -440,22 +450,27 @@ function addLocation(address, lat, lng, managementNo, lotNumber, save = true) {
   createMarker(location); 
   renderList(); 
   updateStatistics();
-  if (save) {
-    saveToLocalStorage();
-  }
+  if (save) saveToLocalStorage();
 }
 
 function createMarker(location) {
   const element = document.createElement('div');
-  element.className = 'customMarker markerUnknown';
-  if (location.status === 1) element.className = 'customMarker markerDone';
-  if (location.status === 2) element.className = 'customMarker markerHold';
+  element.className = 'customMarker';
+  
+  if (location.status === 0) element.classList.add('markerUnknown');
+  else if (location.status === 1) element.classList.add('markerDone');
+  else element.classList.add('markerHold');
 
   element.textContent = location.managementNo || '';
   element.addEventListener('click', () => changeStatus(location));
   element.title = (location.managementNo ? '관리번호: ' + location.managementNo + '\n' : '') + location.address;
-  const overlay = new kakao.maps.CustomOverlay({ position: new kakao.maps.LatLng(location.lat, location.lng), content: element, xAnchor: 0.5, yAnchor: 0.5, zIndex: 10 });
-  overlay.setMap(map); location.marker = overlay;
+  
+  const overlay = new kakao.maps.CustomOverlay({ 
+    position: new kakao.maps.LatLng(location.lat, location.lng), 
+    content: element, xAnchor: 0.5, yAnchor: 0.5, zIndex: 10 
+  });
+  overlay.setMap(map); 
+  location.marker = overlay;
 }
 
 function changeStatus(location) {
@@ -463,14 +478,17 @@ function changeStatus(location) {
   updateMarker(location); 
   renderList(); 
   updateStatistics();
-  saveToLocalStorage(); // 상태 변경될 때도 자동 저장
+  saveToLocalStorage(); 
 }
 
 function updateMarker(location) {
   if (!location.marker) return;
   const el = location.marker.getContent();
   el.classList.remove('markerUnknown', 'markerDone', 'markerHold');
-  el.classList.add(location.status === 0 ? 'markerUnknown' : location.status === 1 ? 'markerDone' : 'markerHold');
+  
+  if (location.status === 0) el.classList.add('markerUnknown');
+  else if (location.status === 1) el.classList.add('markerDone');
+  else el.classList.add('markerHold');
 }
 
 function getStatusColor(status) { return status === 0 ? '#3388ff' : status === 1 ? '#28a745' : '#dc3545'; }
@@ -514,14 +532,14 @@ function deleteLocation(location) {
   locations = locations.filter(i => i.id !== location.id); 
   renderList(); 
   updateStatistics();
-  saveToLocalStorage(); // 개별 삭제 시 저장
+  saveToLocalStorage(); 
 }
 
 function clearAllLocations() { 
   locations.forEach(l => { if (l.marker) l.marker.setMap(null); }); 
   locations = []; 
   excelTotalCount = 0;
-  localStorage.removeItem('standard_locations'); // 저장소 비우기
+  localStorage.removeItem('standard_locations'); 
   localStorage.removeItem('standard_totalCount');
   renderList(); 
   updateStatistics(); 
@@ -530,7 +548,7 @@ function clearAllLocations() {
 function updateStatistics() {
   document.getElementById('totalCount').textContent = excelTotalCount || locations.length;
   document.getElementById('successCount').textContent = locations.length;
-  document.getElementById('failCount').textContent = failedAddresses.length;
+  document.getElementById('failCount').textContent, document.getElementById('failCount').textContent = failedAddresses.length;
   document.getElementById('doneCount').textContent = locations.filter(i => i.status === 1).length;
 }
 
@@ -552,9 +570,6 @@ function fitAllMarkers() {
 
 window.addEventListener('resize', () => map.relayout());
 
-/* =========================================================
-   초기 실행 시 저장된 데이터 불러오기
-   ========================================================= */
 loadFromLocalStorage();
 updateStatistics();
 </script>
