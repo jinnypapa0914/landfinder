@@ -80,15 +80,15 @@
     .mapBtn.tracking-active { background: #dc3545; color: white; }
 
     /* =====================================================
-       ★ [강력 적용] 완전히 투명한 배경의 관리번호 마커
+       ★ [완전 투명] 숫자 배경까지 지워진 관리번호 마커
        ===================================================== */
     .customMarker {
       min-width: 32px !important;
       height: 32px !important;
       padding: 0 6px !important;
       border-radius: 50% !important;
-      background: transparent !important; /* 배경 투명 강제 */
-      background-color: transparent !important; /* 배경색 완전 제거 */
+      background: transparent !important;
+      background-color: transparent !important;
       cursor: pointer;
       display: flex !important;
       align-items: center;
@@ -97,17 +97,17 @@
       font-weight: bold;
       white-space: nowrap;
       user-select: none;
-      /* 지도 위에서 글자가 또렷하게 보이도록 흰색 외곽선/그림자 효과 */
+      /* 투명 배경 위에서도 숫자가 확실히 보이도록 진한 외곽선 및 그림자 강화 */
       text-shadow: 
         -2px -2px 0 #fff,  2px -2px 0 #fff, 
         -2px  2px 0 #fff,  2px  2px 0 #fff,
-         0px  1px 3px rgba(0,0,0,0.9);
+         0px  1px 4px rgba(0,0,0,0.95);
     }
 
-    /* 상태별 테두리 및 글자 색상 (배경은 투명 유지) */
-    .markerUnknown { color: #0056b3 !important; border: 2.5px solid #0056b3 !important; background: transparent !important; } 
-    .markerDone    { color: #1e7e34 !important; border: 2.5px solid #1e7e34 !important; background: transparent !important; } 
-    .markerHold    { color: #bd2130 !important; border: 2.5px solid #bd2130 !important; background: transparent !important; } 
+    /* 상태별 테두리 및 글자 색상 (배경은 완전 투명) */
+    .markerUnknown { color: #0056b3 !important; border: 2.5px solid #0056b3 !important; background: transparent !important; background-color: transparent !important; } 
+    .markerDone    { color: #1e7e34 !important; border: 2.5px solid #1e7e34 !important; background: transparent !important; background-color: transparent !important; } 
+    .markerHold    { color: #bd2130 !important; border: 2.5px solid #bd2130 !important; background: transparent !important; background-color: transparent !important; } 
 
     /* 내 위치 표시 마커 (빨간색) */
     @keyframes pulse-ring-red {
@@ -317,7 +317,7 @@ function searchManualAddress() {
   searchOneAddress(address, '', '');
 }
 
-/* LocalStorage 연동 (v2 키 사용으로 캐시/데이터 충돌 방지) */
+/* LocalStorage 연동 */
 function saveToLocalStorage() {
   const dataToSave = locations.map(l => ({
     id: l.id, address: l.address, lat: l.lat, lng: l.lng,
