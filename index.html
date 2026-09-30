@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -5,6 +6,7 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0,
                  maximum-scale=1.0, user-scalable=no">
+
   <title>표준지 지번 확인 관리</title>
 
   <!-- Kakao Maps API -->
@@ -17,602 +19,360 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0; padding: 0; width: 100%; height: 100%;
-      overflow: hidden; font-family: Arial, "Noto Sans KR", sans-serif;
+    * {
+      box-sizing: border-box;
     }
-    #app { display: flex; width: 100%; height: 100vh; position: relative; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, "Noto Sans KR", sans-serif;
+    }
+
+    #app {
+      display: flex;
+      width: 100%;
+      height: 100vh;
+      position: relative;
+    }
 
     /* =====================================================
        왼쪽 패널
        ===================================================== */
+
     #sidebar {
-      width: 390px; height: 100%; background: #fff;
-      border-right: 1px solid #ddd; display: flex;
-      flex-direction: column; z-index: 100;
+      width: 390px;
+      height: 100%;
+      background: #fff;
+      border-right: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
       transition: left 0.3s ease;
     }
 
     #titleArea {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 16px 18px 12px; border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid #eee;
     }
-    #title { font-size: 21px; font-weight: bold; }
-    
-    #btnMenuOpen, #btnMenuClose { display: none; }
 
-    #excelArea { padding: 12px 15px; background: #f8f9fa; border-bottom: 1px solid #ddd; }
-    #excelAreaTitle { font-size: 14px; font-weight: bold; margin-bottom: 8px; }
-    #excelFile { width: 100%; font-size: 13px; }
-    #excelButton { width: 100%; height: 42px; margin-top: 8px; border: none; border-radius: 6px; background: #198754; color: white; font-size: 15px; font-weight: bold; cursor: pointer; }
-    #excelButton:hover { background: #157347; }
-    #progressArea { display: none; margin-top: 10px; }
-    #progressText { font-size: 12px; color: #555; margin-bottom: 5px; }
-    #progressBarOuter { width: 100%; height: 10px; background: #ddd; border-radius: 5px; overflow: hidden; }
-    #progressBar { width: 0%; height: 100%; background: #198754; transition: width 0.2s; }
-    
-    #searchArea { padding: 12px 15px; border-bottom: 1px solid #eee; }
-    #addressInput { width: 100%; height: 42px; padding: 0 11px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; outline: none; }
-    #searchButton { width: 100%; height: 42px; margin-top: 7px; border: none; border-radius: 6px; background: #3388ff; color: white; font-size: 15px; font-weight: bold; cursor: pointer; }
-    
-    #statistics { padding: 9px 15px; font-size: 12px; line-height: 1.7; background: #fff; border-bottom: 1px solid #eee; }
-    #statistics strong { color: #333; }
-    
-    #statusInfo { display: flex; gap: 5px; padding: 8px 15px; border-bottom: 1px solid #eee; }
-    .statusBox { flex: 1; padding: 5px 2px; text-align: center; border-radius: 5px; color: white; font-size: 11px; font-weight: bold; }
-    .statusUnknown { background: #1b365d; } .statusDone { background: #28a745; } .statusHold { background: #dc3545; }
+    #title {
+      font-size: 21px;
+      font-weight: bold;
+    }
 
-    #list { flex: 1; overflow-y: auto; padding: 8px; }
-    .listItem { display: flex; align-items: center; padding: 9px 7px; margin-bottom: 5px; border: 1px solid #ddd; border-radius: 7px; background: white; cursor: pointer; }
-    .listStatus { width: 17px; height: 17px; min-width: 17px; border-radius: 50%; margin-right: 8px; }
-    .listAddress { flex: 1; min-width: 0; font-size: 13px; line-height: 1.4; }
-    .managementNo, .statusText { color: #777; font-size: 11px; }
-    .deleteButton { width: 29px; height: 29px; border: none; border-radius: 5px; background: #eee; color: #555; cursor: pointer; }
+    #btnMenuOpen,
+    #btnMenuClose {
+      display: none;
+    }
 
-    /* 지도 영역 */
-    #map { flex: 1; height: 100%; position: relative; }
-    
-    .mapControlPanel { position: absolute; top: 15px; right: 15px; z-index: 5; background: white; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); display: flex; overflow: hidden; border: 1px solid #ccc; }
-    .mapBtn { padding: 8px 12px; font-size: 12px; font-weight: bold; background: white; border: none; cursor: pointer; color: #333; border-right: 1px solid #ddd; }
-    .mapBtn:last-child { border-right: none; }
-    .mapBtn.active { background: #3388ff; color: white; }
-    .mapBtn.tracking-active { background: #dc3545; color: white; }
+    #excelArea {
+      padding: 12px 15px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #ddd;
+    }
+
+    #excelAreaTitle {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    #excelFile {
+      width: 100%;
+      font-size: 13px;
+    }
+
+    #excelButton {
+      width: 100%;
+      height: 42px;
+      margin-top: 8px;
+      border: none;
+      border-radius: 6px;
+      background: #198754;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #excelButton:hover {
+      background: #157347;
+    }
+
+    #progressArea {
+      display: none;
+      margin-top: 10px;
+    }
+
+    #progressText {
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 5px;
+    }
+
+    #progressBarOuter {
+      width: 100%;
+      height: 10px;
+      background: #ddd;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    #progressBar {
+      width: 0%;
+      height: 100%;
+      background: #198754;
+      transition: width 0.2s;
+    }
+
+    #searchArea {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+    }
+
+    #addressInput {
+      width: 100%;
+      height: 42px;
+      padding: 0 11px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    #searchButton {
+      width: 100%;
+      height: 42px;
+      margin-top: 7px;
+      border: none;
+      border-radius: 6px;
+      background: #3388ff;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #statistics {
+      padding: 9px 15px;
+      font-size: 12px;
+      line-height: 1.7;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+    }
+
+    #statistics strong {
+      color: #333;
+    }
+
+    #statusInfo {
+      display: flex;
+      gap: 5px;
+      padding: 8px 15px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .statusBox {
+      flex: 1;
+      padding: 5px 2px;
+      text-align: center;
+      border-radius: 5px;
+      color: white;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .statusUnknown {
+      background: #1b365d;
+    }
+
+    .statusDone {
+      background: #28a745;
+    }
+
+    .statusHold {
+      background: #dc3545;
+    }
+
+    #list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .listItem {
+      display: flex;
+      align-items: center;
+      padding: 9px 7px;
+      margin-bottom: 5px;
+      border: 1px solid #ddd;
+      border-radius: 7px;
+      background: white;
+      cursor: pointer;
+    }
+
+    .listStatus {
+      width: 17px;
+      height: 17px;
+      min-width: 17px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .listAddress {
+      flex: 1;
+      min-width: 0;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .managementNo,
+    .statusText {
+      color: #777;
+      font-size: 11px;
+    }
+
+    .deleteButton {
+      width: 29px;
+      height: 29px;
+      border: none;
+      border-radius: 5px;
+      background: #eee;
+      color: #555;
+      cursor: pointer;
+    }
 
     /* =====================================================
-       ★ [완전 투명 원형 3단 마커] 흰색 배경 원천 차단 및 크기 조절
+       지도 영역
        ===================================================== */
+
+    #map {
+      flex: 1;
+      height: 100%;
+      position: relative;
+    }
+
+    .mapControlPanel {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      z-index: 5;
+      background: white;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      display: flex;
+      overflow: hidden;
+      border: 1px solid #ccc;
+    }
+
+    .mapBtn {
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: bold;
+      background: white;
+      border: none;
+      cursor: pointer;
+      color: #333;
+      border-right: 1px solid #ddd;
+    }
+
+    .mapBtn:last-child {
+      border-right: none;
+    }
+
+    .mapBtn.active {
+      background: #3388ff;
+      color: white;
+    }
+
+    .mapBtn.tracking-active {
+      background: #dc3545;
+      color: white;
+    }
+
+    /* =====================================================
+       ★ 원형 3단 마커
+       
+       1단 : 관리번호
+       2단 : 리 이름
+       3단 : 지번
+       
+       원 내부는 완전 투명
+       ===================================================== */
+
     .customMarkerCircle {
       min-width: 52px;
       min-height: 52px;
+
       padding: 6px 8px;
+
       border-radius: 50%;
-      /* 배경을 투명하게 설정하고 흰색 박스/배경이 생기지 않도록 강제 */
+
+      /* ★ 원 내부 완전 투명 */
       background: transparent !important;
       background-color: transparent !important;
+
       cursor: pointer;
+
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+
       text-align: center;
       user-select: none;
       white-space: nowrap;
-      /* 지도 지형 위에서 선명하게 보이도록 강한 테두리 및 그림자 부여 */
-      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+
+      /* ★ 흰색 배경이나 그림자 없음 */
+      box-shadow: none !important;
     }
 
-    /* 상태별 테두리 및 글자 색상 (배경 완전 투명) */
-    .marker-box-0 { border: 2.5px solid #1b365d !important; color: #1b365d !important; background: transparent !important; background-color: transparent !important; }
-    .marker-box-1 { border: 2.5px solid #1e7e34 !important; color: #1e7e34 !important; background: transparent !important; background-color: transparent !important; }
-    .marker-box-2 { border: 2.5px solid #bd2130 !important; color: #bd2130 !important; background: transparent !important; background-color: transparent !important; }
+    /* =====================================================
+       상태별 원 테두리
+       ===================================================== */
 
-    /* 각 줄 공통 스타일 (글자 가독성을 위한 흰색 외곽선 그림자) */
+    .marker-box-0 {
+      border: 2.5px solid #1b365d !important;
+      color: #1b365d !important;
+
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+
+    .marker-box-1 {
+      border: 2.5px solid #1e7e34 !important;
+      color: #1e7e34 !important;
+
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+
+    .marker-box-2 {
+      border: 2.5px solid #bd2130 !important;
+      color: #bd2130 !important;
+
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+
+    /* =====================================================
+       각 줄 공통
+       
+       ★ 기존 흰색 외곽선 제거
+       ===================================================== */
+
     .marker-text-line {
-      line-height: 1.1;
+      line-height: 1.05;
       font-weight: bold;
-      text-shadow: 
-        -1.5px -1.5px 0 #fff,  1.5px -1.5px 0 #fff, 
-        -1.5px  1.5px 0 #fff,  1.5px  1.5px 0 #fff,
-         0px  1px 3px rgba(0,0,0,0.9);
-    }
 
-    /* 1단: 관리번호 */
-    .line-no { font-size: 12px; }
-    /* 2단: 리 이름 */
-    .line-village { font-size: 11px; }
-    /* 3단: 지번 (관리번호의 절반 크기인 약 6~7px 수준으로 작게 설정) */
-    .line-lot { font-size: 7px; margin-top: 1px; opacity: 0.95; }
+      background: transparent !important;
 
-    /* 내 위치 표시 마커 (빨간색) */
-    @keyframes pulse-ring-red {
-      0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
-      70% { box-shadow: 0 0 0 15px rgba(220, 53, 69, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
-    }
-    .currentLocMarker { 
-      width: 18px; height: 18px; background-color: #dc3545; 
-      border: 3px solid #ffffff; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.5); 
-      position: relative; z-index: 20; animation: pulse-ring-red 2s infinite; 
-    }
-
-    /* 모바일 화면 */
-    @media (max-width: 700px) {
-      #sidebar {
-        position: absolute; top: 0; left: -320px; 
-        width: 320px; box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-      }
-      #sidebar.open { left: 0; }
-      #title { font-size: 18px; }
-      
-      #btnMenuOpen {
-        display: block; position: absolute; top: 15px; left: 15px; z-index: 10;
-        padding: 8px 12px; background: white; border: 1px solid #ccc;
-        border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        font-size: 14px; font-weight: bold; cursor: pointer; color: #333;
-      }
-      #btnMenuClose {
-        display: block; background: none; border: none; font-size: 22px; 
-        color: #555; font-weight: bold; cursor: pointer; padding: 0 5px;
-      }
-      .mapControlPanel { top: 60px; right: 10px; }
-      .mapBtn { padding: 6px 8px; font-size: 11px; }
-    }
-  </style>
-</head>
-
-<body>
-<div id="app">
-
-  <div id="sidebar" class="open">
-    <div id="titleArea">
-      <div id="title">표준지 지번 확인 관리</div>
-      <button id="btnMenuClose" onclick="toggleMenu()">✕</button>
-    </div>
-
-    <div id="excelArea">
-      <div id="excelAreaTitle">📂 표준지 엑셀 일괄등록</div>
-      <input type="file" id="excelFile">
-      <button id="excelButton">엑셀 주소 불러오기</button>
-      <div id="progressArea">
-        <div id="progressText">준비 중...</div>
-        <div id="progressBarOuter"><div id="progressBar"></div></div>
-      </div>
-    </div>
-
-    <div id="searchArea">
-      <input type="text" id="addressInput" placeholder="예: 청도군 이서면 고철리 6">
-      <button id="searchButton">주소 검색</button>
-    </div>
-
-    <div id="statistics">
-      <div>전체: <strong id="totalCount">0</strong>건</div>
-      <div>표시: <strong id="successCount">0</strong>건</div>
-      <div>검색실패: <strong id="failCount">0</strong>건</div>
-      <div>확인완료: <strong id="doneCount">0</strong>건</div>
-    </div>
-
-    <div id="statusInfo">
-      <div class="statusBox statusUnknown">미확인</div>
-      <div class="statusBox statusDone">확인완료</div>
-      <div class="statusBox statusHold">보류</div>
-    </div>
-
-    <div id="list"></div>
-  </div>
-
-  <div id="map">
-    <button id="btnMenuOpen" onclick="toggleMenu()">☰ 메뉴</button>
-    
-    <div class="mapControlPanel">
-      <button type="button" id="btnCurrentLoc" class="mapBtn" onclick="toggleCurrentLocation()">내 위치(OFF)</button>
-      <button type="button" id="btnRoadmap" class="mapBtn" onclick="setMapType('roadmap')">일반지도</button>
-      <button type="button" id="btnSkyview" class="mapBtn active" onclick="setMapType('skyview')">위성지도</button>
-      <button type="button" id="btnDistrict" class="mapBtn active" onclick="toggleDistrict()">지적편집도(ON)</button>
-    </div>
-  </div>
-
-</div>
-
-<script>
-function toggleMenu() {
-  const sidebar = document.getElementById('sidebar');
-  sidebar.classList.toggle('open');
-}
-
-const mapContainer = document.getElementById('map');
-const mapOption = { center: new kakao.maps.LatLng(35.6628, 128.6694), level: 3 };
-const map = new kakao.maps.Map(mapContainer, mapOption);
-
-map.setMapTypeId(kakao.maps.MapTypeId.SKYVIEW);
-map.addOverlayMapTypeId(kakao.maps.MapTypeId.USE_DISTRICT);
-let isDistrictOn = true;
-
-function setMapType(type) {
-  const btnRoadmap = document.getElementById('btnRoadmap');
-  const btnSkyview = document.getElementById('btnSkyview');
-  if (type === 'roadmap') {
-    map.setMapTypeId(kakao.maps.MapTypeId.ROADMAP);
-    btnRoadmap.classList.add('active');
-    btnSkyview.classList.remove('active');
-  } else {
-    map.setMapTypeId(kakao.maps.MapTypeId.SKYVIEW);
-    btnSkyview.classList.add('active');
-    btnRoadmap.classList.remove('active');
-  }
-}
-
-function toggleDistrict() {
-  const btnDistrict = document.getElementById('btnDistrict');
-  if (isDistrictOn) {
-    map.removeOverlayMapTypeId(kakao.maps.MapTypeId.USE_DISTRICT);
-    isDistrictOn = false;
-    btnDistrict.textContent = '지적편집도(OFF)';
-    btnDistrict.classList.remove('active');
-  } else {
-    map.addOverlayMapTypeId(kakao.maps.MapTypeId.USE_DISTRICT);
-    isDistrictOn = true;
-    btnDistrict.textContent = '지적편집도(ON)';
-    btnDistrict.classList.add('active');
-  }
-}
-
-const zoomControl = new kakao.maps.ZoomControl();
-map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
-const geocoder = new kakao.maps.services.Geocoder();
-
-let locations = []; 
-let failedAddresses = []; 
-let excelTotalCount = 0;
-
-document.getElementById('searchButton').addEventListener('click', searchManualAddress);
-document.getElementById('addressInput').addEventListener('keydown', function(event) {
-  if (event.key === 'Enter') searchManualAddress();
-});
-document.getElementById('excelButton').addEventListener('click', loadExcel);
-
-/* 실시간 내 위치 추적 */
-let currentLocationOverlay = null; 
-let locationWatchId = null;        
-let isTracking = false;            
-
-function toggleCurrentLocation() {
-  const btnLoc = document.getElementById('btnCurrentLoc');
-  if (isTracking) {
-    if (navigator.geolocation && locationWatchId !== null) {
-      navigator.geolocation.clearWatch(locationWatchId);
-      locationWatchId = null;
-    }
-    isTracking = false;
-    btnLoc.classList.remove('tracking-active');
-    btnLoc.textContent = '내 위치(OFF)';
-    if (currentLocationOverlay) {
-      currentLocationOverlay.setMap(null);
-      currentLocationOverlay = null;
-    }
-  } else {
-    if (navigator.geolocation) {
-      isTracking = true;
-      btnLoc.classList.add('tracking-active');
-      btnLoc.textContent = '내 위치(ON)';
-
-      locationWatchId = navigator.geolocation.watchPosition(
-        function(position) {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          const locPosition = new kakao.maps.LatLng(lat, lon);
-          if (!currentLocationOverlay) {
-            const content = document.createElement('div');
-            content.className = 'currentLocMarker';
-            content.title = '실시간 내 위치';
-            currentLocationOverlay = new kakao.maps.CustomOverlay({
-              map: map, position: locPosition, content: content, xAnchor: 0.5, yAnchor: 0.5, zIndex: 20
-            });
-            map.setCenter(locPosition);
-            map.setLevel(3);
-          } else {
-            currentLocationOverlay.setPosition(locPosition);
-          }
-        },
-        function(error) {
-          alert('위치 정보를 가져올 수 없습니다. 권한을 확인해 주세요.');
-          if (isTracking) toggleCurrentLocation();
-        },
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
-      );
-    } else {
-      alert('이 브라우저에서는 위치 정보가 지원되지 않습니다.');
-    }
-  }
-}
-
-function searchManualAddress() {
-  const address = document.getElementById('addressInput').value.trim();
-  if (!address) { alert('주소를 입력해주세요.'); return; }
-  searchOneAddress(address, '', '');
-}
-
-/* LocalStorage 연동 (v4 키 사용으로 캐시 무조건 갱신) */
-function saveToLocalStorage() {
-  const dataToSave = locations.map(l => ({
-    id: l.id, address: l.address, lat: l.lat, lng: l.lng,
-    managementNo: l.managementNo, village: l.village, lotNumber: l.lotNumber, status: l.status
-  }));
-  localStorage.setItem('standard_locations_v4', JSON.stringify(dataToSave));
-  localStorage.setItem('standard_totalCount_v4', excelTotalCount);
-}
-
-function loadFromLocalStorage() {
-  const savedData = localStorage.getItem('standard_locations_v4');
-  const savedTotal = localStorage.getItem('standard_totalCount_v4');
-  
-  if (savedData) {
-    try {
-      const parsed = JSON.parse(savedData);
-      excelTotalCount = savedTotal ? Number(savedTotal) : parsed.length;
-      
-      parsed.forEach(item => {
-        const location = {
-          id: item.id, address: item.address, lat: item.lat, lng: item.lng,
-          managementNo: item.managementNo || '', village: item.village || '', lotNumber: item.lotNumber || '',
-          status: item.status || 0, marker: null
-        };
-        locations.push(location);
-        createMarker(location);
-      });
-      
-      renderList();
-      updateStatistics();
-      if (locations.length > 0) fitAllMarkers();
-    } catch(e) { console.error(e); }
-  }
-}
-
-function loadExcel() {
-  const fileInput = document.getElementById('excelFile');
-  if (!fileInput.files || fileInput.files.length === 0) { alert('먼저 엑셀 파일을 선택해주세요.'); return; }
-  
-  const file = fileInput.files[0];
-  const fileName = file.name.toLowerCase();
-  if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
-    alert('엑셀 파일(.xlsx, .xls)만 업로드할 수 있습니다.');
-    return;
-  }
-
-  const reader = new FileReader();
-
-  reader.onload = async function(event) {
-    try {
-      const data = new Uint8Array(event.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: '' });
-      if (!rows || rows.length === 0) return;
-
-      let startIndex = 0;
-      if (isNaN(Number(String(rows[0][0] || '').trim()))) startIndex = 1;
-
-      const excelRows = [];
-      for (let i = startIndex; i < rows.length; i++) {
-        if (!rows[i] || rows[i].length < 3) continue;
-        const managementNo = String(rows[i][0] || '').trim();
-        const village = String(rows[i][1] || '').trim();
-        const lotNumber = String(rows[i][2] || '').trim();
-        if (village === '' && lotNumber === '') continue;
-        excelRows.push({ managementNo, village, lotNumber, address: makeFullAddress(village, lotNumber) });
-      }
-
-      excelTotalCount = excelRows.length;
-      if (locations.length > 0) {
-        if (!confirm('현재 지도에 ' + locations.length + '개의 지번이 있습니다.\n\n기존 데이터를 지우고 새 엑셀 파일을 불러오시겠습니까?')) return;
-        clearAllLocations();
-      }
-
-      failedAddresses = []; showProgress();
-      for (let i = 0; i < excelRows.length; i++) {
-        updateProgress(i, excelRows.length, excelRows[i].address);
-        await searchOneAddressAsync(excelRows[i].address, excelRows[i].managementNo, excelRows[i].village, excelRows[i].lotNumber);
-        await sleep(250);
-      }
-      updateProgress(excelRows.length, excelRows.length, '완료');
-      
-      saveToLocalStorage(); 
-      fitAllMarkers(); 
-      updateStatistics(); 
-      setTimeout(hideProgress, 1500);
-
-      if (window.innerWidth <= 700) { toggleMenu(); }
-
-      alert(failedAddresses.length > 0 ? `검색 성공: ${locations.length}건\n검색 실패: ${failedAddresses.length}건` : '모두 표시되었습니다.');
-    } catch (e) { alert('오류 발생: ' + e.message); hideProgress(); }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function makeFullAddress(village, lotNumber) {
-  let address = '경상북도 청도군 ';
-  if (village) address += village + ' ';
-  if (lotNumber) address += lotNumber;
-  return address.trim();
-}
-
-function searchOneAddressAsync(address, managementNo, village, lotNumber) {
-  return new Promise(resolve => {
-    geocoder.addressSearch(address, (result, status) => {
-      if (status === kakao.maps.services.Status.OK) {
-        const lat = parseFloat(result[0].y), lng = parseFloat(result[0].x);
-        if (!locations.some(item => Math.abs(item.lat - lat) < 0.000001 && Math.abs(item.lng - lng) < 0.000001)) {
-          addLocation(address, lat, lng, managementNo, village, lotNumber, false);
-        }
-      } else failedAddresses.push({ managementNo, address, lotNumber });
-      updateStatistics(); resolve();
-    });
-  });
-}
-
-function searchOneAddress(address, managementNo, lotNumber) {
-  geocoder.addressSearch(address, (result, status) => {
-    if (status === kakao.maps.services.Status.OK) {
-      const lat = parseFloat(result[0].y), lng = parseFloat(result[0].x);
-      let village = '';
-      const parts = address.split(' ');
-      if (parts.length >= 3) village = parts[2];
-      
-      addLocation(address, lat, lng, managementNo, village, lotNumber, true);
-      map.setCenter(new kakao.maps.LatLng(lat, lng)); map.setLevel(3);
-      if (window.innerWidth <= 700) toggleMenu();
-    } else alert('주소를 찾을 수 없습니다.');
-  });
-}
-
-function addLocation(address, lat, lng, managementNo, village, lotNumber, save = true) {
-  const location = { 
-    id: Date.now() + Math.random(), 
-    address, lat, lng, 
-    managementNo: managementNo || '', 
-    village: village || '', 
-    lotNumber: lotNumber || '', 
-    status: 0, 
-    marker: null 
-  };
-  locations.push(location); 
-  createMarker(location); 
-  renderList(); 
-  updateStatistics();
-  if (save) saveToLocalStorage();
-}
-
-/* =====================================================
-   ★ 원형 3단 마커 생성 (1단:관리번호 / 2단:리 / 3단:작은지번)
-   ===================================================== */
-function createMarker(location) {
-  const container = document.createElement('div');
-  container.className = 'customMarkerCircle marker-box-' + location.status;
-  container.title = (location.managementNo ? '관리번호: ' + location.managementNo + '\n' : '') + location.address;
-
-  // 1단: 관리번호
-  const line1 = document.createElement('div');
-  line1.className = 'marker-text-line line-no';
-  line1.textContent = location.managementNo;
-
-  // 2단: 리 이름만
-  const line2 = document.createElement('div');
-  line2.className = 'marker-text-line line-village';
-  line2.textContent = location.village;
-
-  // 3단: 지번 (작은 크기)
-  const line3 = document.createElement('div');
-  line3.className = 'marker-text-line line-lot';
-  line3.textContent = location.lotNumber ? location.lotNumber : location.address;
-
-  container.appendChild(line1);
-  if (location.village) container.appendChild(line2);
-  container.appendChild(line3);
-
-  container.addEventListener('click', () => changeStatus(location));
-
-  const overlay = new kakao.maps.CustomOverlay({ 
-    position: new kakao.maps.LatLng(location.lat, location.lng), 
-    content: container, xAnchor: 0.5, yAnchor: 0.5, zIndex: 10 
-  });
-  overlay.setMap(map); 
-  location.marker = overlay;
-}
-
-function changeStatus(location) {
-  location.status = location.status > 1 ? 0 : location.status + 1;
-  updateMarker(location); 
-  renderList(); 
-  updateStatistics();
-  saveToLocalStorage(); 
-}
-
-function updateMarker(location) {
-  if (!location.marker) return;
-  const container = location.marker.getContent();
-  container.className = 'customMarkerCircle marker-box-' + location.status;
-}
-
-function getStatusColor(status) { return status === 0 ? '#1b365d' : status === 1 ? '#28a745' : '#dc3545'; }
-function getStatusName(status) { return status === 0 ? '미확인' : status === 1 ? '확인완료' : '보류'; }
-
-function renderList() {
-  const list = document.getElementById('list'); list.innerHTML = '';
-  [...locations].reverse().forEach(location => {
-    const item = document.createElement('div'); item.className = 'listItem';
-    item.innerHTML = `<div class="listStatus" style="background:${getStatusColor(location.status)}"></div>
-      <div class="listAddress"><span class="managementNo">관리번호 ${location.managementNo || '-'}</span><br><strong>${location.address}</strong><br><span class="statusText">${getStatusName(location.status)}</span></div>`;
-    
-    const delBtn = document.createElement('button'); delBtn.className = 'deleteButton'; delBtn.textContent = '✕';
-    delBtn.onclick = (e) => { e.stopPropagation(); deleteLocation(location); };
-    item.appendChild(delBtn);
-
-    item.onclick = () => {
-      map.setCenter(new kakao.maps.LatLng(location.lat, location.lng)); map.setLevel(3);
-      if (window.innerWidth <= 700) { document.getElementById('sidebar').classList.remove('open'); }
-    };
-    item.ondblclick = (e) => { e.stopPropagation(); changeStatus(location); };
-    list.appendChild(item);
-  });
-
-  if (failedAddresses.length > 0) {
-    const failTitle = document.createElement('div');
-    failTitle.style.cssText = 'padding:12px 7px 5px; color:#dc3545; font-weight:bold; font-size:13px;';
-    failTitle.textContent = '⚠ 검색 실패 ' + failedAddresses.length + '건';
-    list.appendChild(failTitle);
-    failedAddresses.forEach(item => {
-      const fail = document.createElement('div');
-      fail.style.cssText = 'padding:7px; margin-bottom:4px; border:1px solid #f0c0c0; border-radius:5px; background:#fff7f7; font-size:11px;';
-      fail.innerHTML = `<b>${item.managementNo || '-'}</b><br>${item.address}`;
-      list.appendChild(fail);
-    });
-  }
-}
-
-function deleteLocation(location) { 
-  if (location.marker) location.marker.setMap(null); 
-  locations = locations.filter(i => i.id !== location.id); 
-  renderList(); 
-  updateStatistics();
-  saveToLocalStorage(); 
-}
-
-function clearAllLocations() { 
-  locations.forEach(l => { if (l.marker) l.marker.setMap(null); }); 
-  locations = []; 
-  excelTotalCount = 0;
-  localStorage.removeItem('standard_locations_v4'); 
-  localStorage.removeItem('standard_totalCount_v4');
-  renderList(); 
-  updateStatistics(); 
-}
-
-function updateStatistics() {
-  document.getElementById('totalCount').textContent = excelTotalCount || locations.length;
-  document.getElementById('successCount').textContent = locations.length;
-  document.getElementById('failCount').textContent = failedAddresses.length;
-  document.getElementById('doneCount').textContent = locations.filter(i => i.status === 1).length;
-}
-
-function showProgress() { document.getElementById('progressArea').style.display = 'block'; document.getElementById('progressBar').style.width = '0%'; }
-function updateProgress(curr, tot, addr) {
-  const pct = tot > 0 ? Math.round(curr / tot * 100) : 0;
-  document.getElementById('progressBar').style.width = pct + '%';
-  document.getElementById('progressText').textContent = `${curr} / ${tot}건 처리 중... ${pct}%`;
-}
-function hideProgress() { document.getElementById('progressArea').style.display = 'none'; }
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-function fitAllMarkers() {
-  if (!locations.length) return;
-  const bounds = new kakao.maps.LatLngBounds();
-  locations.forEach(l => bounds.extend(new kakao.maps.LatLng(l.lat, l.lng)));
-  map.setBounds(bounds); if (locations.length === 1) map.setLevel(4);
-}
-
-window.addEventListener('resize', () => map.relayout());
-
-loadFromLocalStorage();
-updateStatistics();
-</script>
-</body>
-</html>
+      /*
+```
