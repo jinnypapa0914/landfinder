@@ -80,33 +80,34 @@
     .mapBtn.tracking-active { background: #dc3545; color: white; }
 
     /* =====================================================
-       ★ 관리번호 마커 (배경 투명 및 외곽선 가독성 처리)
+       ★ [강력 적용] 완전히 투명한 배경의 관리번호 마커
        ===================================================== */
     .customMarker {
-      min-width: 32px;
-      height: 32px;
-      padding: 0 6px;
-      border-radius: 50%;
-      background: transparent !important; /* 배경 투명 강제 적용 */
+      min-width: 32px !important;
+      height: 32px !important;
+      padding: 0 6px !important;
+      border-radius: 50% !important;
+      background: transparent !important; /* 배경 투명 강제 */
+      background-color: transparent !important; /* 배경색 완전 제거 */
       cursor: pointer;
-      display: flex;
+      display: flex !important;
       align-items: center;
       justify-content: center;
       font-size: 12px;
       font-weight: bold;
       white-space: nowrap;
       user-select: none;
-      /* 지도 배경(위성/지적도) 위에서 글자가 잘 보이도록 흰색 외곽선 및 그림자 부여 */
+      /* 지도 위에서 글자가 또렷하게 보이도록 흰색 외곽선/그림자 효과 */
       text-shadow: 
         -2px -2px 0 #fff,  2px -2px 0 #fff, 
         -2px  2px 0 #fff,  2px  2px 0 #fff,
          0px  1px 3px rgba(0,0,0,0.9);
     }
 
-    /* 상태별 테두리 및 글자 색상 */
-    .markerUnknown { color: #0056b3; border: 2.5px solid #0056b3; } /* 미확인: 파란색 */
-    .markerDone    { color: #1e7e34; border: 2.5px solid #1e7e34; } /* 확인완료: 초록색 */
-    .markerHold    { color: #bd2130; border: 2.5px solid #bd2130; } /* 보류: 빨간색 */
+    /* 상태별 테두리 및 글자 색상 (배경은 투명 유지) */
+    .markerUnknown { color: #0056b3 !important; border: 2.5px solid #0056b3 !important; background: transparent !important; } 
+    .markerDone    { color: #1e7e34 !important; border: 2.5px solid #1e7e34 !important; background: transparent !important; } 
+    .markerHold    { color: #bd2130 !important; border: 2.5px solid #bd2130 !important; background: transparent !important; } 
 
     /* 내 위치 표시 마커 (빨간색) */
     @keyframes pulse-ring-red {
@@ -316,19 +317,19 @@ function searchManualAddress() {
   searchOneAddress(address, '', '');
 }
 
-/* LocalStorage 연동 */
+/* LocalStorage 연동 (v2 키 사용으로 캐시/데이터 충돌 방지) */
 function saveToLocalStorage() {
   const dataToSave = locations.map(l => ({
     id: l.id, address: l.address, lat: l.lat, lng: l.lng,
     managementNo: l.managementNo, lotNumber: l.lotNumber, status: l.status
   }));
-  localStorage.setItem('standard_locations', JSON.stringify(dataToSave));
-  localStorage.setItem('standard_totalCount', excelTotalCount);
+  localStorage.setItem('standard_locations_v2', JSON.stringify(dataToSave));
+  localStorage.setItem('standard_totalCount_v2', excelTotalCount);
 }
 
 function loadFromLocalStorage() {
-  const savedData = localStorage.getItem('standard_locations');
-  const savedTotal = localStorage.getItem('standard_totalCount');
+  const savedData = localStorage.getItem('standard_locations_v2');
+  const savedTotal = localStorage.getItem('standard_totalCount_v2');
   
   if (savedData) {
     try {
@@ -539,8 +540,8 @@ function clearAllLocations() {
   locations.forEach(l => { if (l.marker) l.marker.setMap(null); }); 
   locations = []; 
   excelTotalCount = 0;
-  localStorage.removeItem('standard_locations'); 
-  localStorage.removeItem('standard_totalCount');
+  localStorage.removeItem('standard_locations_v2'); 
+  localStorage.removeItem('standard_totalCount_v2');
   renderList(); 
   updateStatistics(); 
 }
